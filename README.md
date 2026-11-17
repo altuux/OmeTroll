@@ -19,3 +19,7 @@ Electron-based Man-in-the-Middle (MITM) video & audio router with a built-in Adm
 npm install
 npm start
 ```
+
+## License
+
+Licensed under the [GNU General Public License v3.0](LICENSE).
