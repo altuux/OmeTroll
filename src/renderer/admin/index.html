@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmeTroll — Control Deck</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- TOP BAR (54px) -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="brand-name">OmeTroll</span>
+    </div>
+
+    <div class="url-controls">
+      <select id="presetSelect" title="Site Presets">
+        <option value="https://ome.tv/">Ome.TV</option>
+        <option value="https://uhmegle.com/">Uhmegle</option>
+        <option value="https://www.chitchat.gg/">Chitchat</option>
+        <option value="https://webcamtests.com/">Webcam Test</option>
+      </select>
+      <input id="urlInput" type="text" value="https://ome.tv/" placeholder="https://ome.tv/" />
+      <button id="btnLoadBoth" class="btn btn-primary">Load</button>
+      <button id="btnReloadA" class="btn btn-ghost" title="Reload Slot A">Reload A</button>
+      <button id="btnReloadB" class="btn btn-ghost" title="Reload Slot B">Reload B</button>
+    </div>
+
+    <div class="top-actions">
+      <div class="deck-tabs">
+        <button id="tabMixer" class="btn btn-tab active">Deck</button>
+        <button id="tabSoundMixer" class="btn btn-tab">Sound Mixer</button>
+        <button id="tabLogs" class="btn btn-tab">Logs</button>
+      </div>
+      <button id="btnSettings" class="btn btn-ghost">Proxy &amp; Tools</button>
+    </div>
+  </header>
+
+  <!-- MIDDLE VIEWPORT AREA (WebContentsViews A & B sit here) -->
+  <main class="slots-stage">
+    <div class="stage-placeholder">
+      <span>Slot A (Left) / Slot B (Right)</span>
+    </div>
+  </main>
+
+  <!-- BOTTOM ADMIN CONTROL DECK (340px) -->
+  <section id="mixerDeck" class="control-deck">
+    <!-- SLOT A CARD -->
+    <div class="deck-card slot-card">
+      <div class="card-header">
+        <span class="slot-label">STRANGER A</span>
+        <span id="statusA" class="badge badge-idle">Waiting</span>
+      </div>
+      <div class="preview-wrap">
+        <video id="previewA" autoplay playsinline muted></video>
+        <div class="vu-bar"><div id="vuFillA" class="vu-fill"></div></div>
+      </div>
+      <div class="crop-bar">
+        <span class="crop-label">Zoom</span>
+        <input id="cropA" type="range" min="0" max="100" step="2" value="0" title="Zoom / Crop (%)" />
+        <span id="cropValA" class="crop-val">0%</span>
+        <button id="btnFlipA" class="btn btn-xs btn-toggle" title="Mirror horizontally">Flip</button>
+      </div>
+      <div class="slot-actions">
+        <button id="btnMonitorA" class="btn btn-toggle active" title="Listen to Stranger A">Monitoring A</button>
+        <button id="btnNextA" class="btn btn-warn">Next A</button>
+      </div>
+    </div>
+
+    <!-- MITM ROUTING MATRIX & MIC -->
+    <div class="deck-card matrix-card">
+      <div class="card-header">
+        <span class="slot-label">AUDIO &amp; VIDEO ROUTER</span>
+        <span id="bridgeStatus" class="badge badge-ok">Bridge Ready</span>
+      </div>
+
+      <div class="matrix-rows">
+        <div class="matrix-row">
+          <span class="route-name">A &rarr; B</span>
+          <button id="btnVidAtoB" class="btn btn-toggle active">Cam ON</button>
+          <button id="btnAudAtoB" class="btn btn-toggle active">Mic ON</button>
+          <input id="volAtoB" type="range" min="0" max="1.5" step="0.05" value="1" title="A to B Volume" />
+        </div>
+
+        <div class="matrix-row">
+          <span class="route-name">B &rarr; A</span>
+          <button id="btnVidBtoA" class="btn btn-toggle active">Cam ON</button>
+          <button id="btnAudBtoA" class="btn btn-toggle active">Mic ON</button>
+          <input id="volBtoA" type="range" min="0" max="1.5" step="0.05" value="1" title="B to A Volume" />
+        </div>
+
+        <div class="matrix-row">
+          <span class="route-name">Mix</span>
+          <span class="mix-label">You A</span>
+          <input id="volMonA" type="range" min="0" max="1" step="0.05" value="0.85" title="Your Monitor A Volume" />
+          <span class="mix-label">You B</span>
+          <input id="volMonB" type="range" min="0" max="1" step="0.05" value="0.85" title="Your Monitor B Volume" />
+        </div>
+      </div>
+
+      <div class="quick-troll-bar">
+        <button id="btnStartBoth" class="btn btn-primary">Start Both</button>
+        <button id="btnNextBoth" class="btn btn-danger">Next Both</button>
+        <button id="btnBlackoutA" class="btn btn-ghost">Blackout A</button>
+        <button id="btnBlackoutB" class="btn btn-ghost">Blackout B</button>
+      </div>
+
+      <div class="quick-troll-bar decoy-bar">
+        <button id="btnLoadDecoy" class="btn btn-ghost" title="Load a face photo for decoy">Load Decoy</button>
+        <button id="btnToggleDecoy" class="btn btn-toggle" disabled title="Activate / Deactivate decoy image">Decoy: OFF</button>
+        <button id="btnRealCamWait" class="btn btn-toggle" title="Use your real webcam until match connects">Real Cam (Wait)</button>
+        <input id="decoyImgInput" type="file" accept="image/*" hidden />
+      </div>
+
+      <div class="mic-bar">
+        <select id="micSelect" class="mic-select" title="Select Admin Microphone">
+          <option value="">Default Mic</option>
+        </select>
+        <button id="btnEnableMic" class="btn btn-ghost">Enable Mic</button>
+        <button id="btnMicToA" class="btn btn-toggle" disabled>Talk &rarr; A</button>
+        <button id="btnMicToB" class="btn btn-toggle" disabled>Talk &rarr; B</button>
+        <div class="vu-mini"><div id="vuFillMic" class="vu-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- SOUNDBOARD -->
+    <div class="deck-card soundboard-card">
+      <div class="card-header">
+        <span class="slot-label">SOUNDBOARD</span>
+        <div class="sb-target">
+          <button class="btn btn-xs sb-tgt active" data-target="both">Both</button>
+          <button class="btn btn-xs sb-tgt" data-target="A">A</button>
+          <button class="btn btn-xs sb-tgt" data-target="B">B</button>
+        </div>
+      </div>
+      <div class="sb-cats">
+        <button class="btn btn-xs sb-cat active" data-cat="sfx">SFX</button>
+        <button class="btn btn-xs sb-cat" data-cat="memes">Memes</button>
+        <button class="btn btn-xs sb-cat" data-cat="viral">Viral</button>
+        <button class="btn btn-xs sb-cat" data-cat="games">Games</button>
+        <button class="btn btn-xs sb-cat" data-cat="custom">Custom</button>
+      </div>
+      <div class="sb-search-bar">
+        <input id="sbSearchInput" type="text" placeholder="Search MyInstants..." />
+        <button id="btnLoadInstants" class="btn btn-xs btn-primary">Fetch</button>
+        <button id="btnUploadSfx" class="btn btn-xs btn-ghost">+ File</button>
+        <input id="sfxFileInput" type="file" accept="audio/*" hidden />
+      </div>
+      <div id="sbGrid" class="sb-grid"></div>
+      <div class="sb-footer">
+        <span>Vol</span>
+        <input id="volSfx" type="range" min="0" max="1.5" step="0.05" value="0.9" />
+        <button id="btnStopSfx" class="btn btn-xs btn-ghost">Stop</button>
+      </div>
+    </div>
+
+    <!-- SLOT B CARD -->
+    <div class="deck-card slot-card">
+      <div class="card-header">
+        <span class="slot-label">STRANGER B</span>
+        <span id="statusB" class="badge badge-idle">Waiting</span>
+      </div>
+      <div class="preview-wrap">
+        <video id="previewB" autoplay playsinline muted></video>
+        <div class="vu-bar"><div id="vuFillB" class="vu-fill"></div></div>
+      </div>
+      <div class="crop-bar">
+        <span class="crop-label">Zoom</span>
+        <input id="cropB" type="range" min="0" max="100" step="2" value="0" title="Zoom / Crop (%)" />
+        <span id="cropValB" class="crop-val">0%</span>
+        <button id="btnFlipB" class="btn btn-xs btn-toggle" title="Mirror horizontally">Flip</button>
+      </div>
+      <div class="slot-actions">
+        <button id="btnMonitorB" class="btn btn-toggle active" title="Listen to Stranger B">Monitoring B</button>
+        <button id="btnNextB" class="btn btn-warn">Next B</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTTOM DEDICATED SOUND MIXER DECK (340px) -->
+  <section id="soundMixerDeck" class="sound-mixer-deck hidden">
+    <div class="deck-card ch-strip">
+      <div class="card-header">
+        <span class="slot-label">CH 1: STRANGER A</span>
+        <span id="smValAtoB" class="ch-val">100%</span>
+      </div>
+      <div class="ch-fader-row">
+        <label>Out &rarr; B</label>
+        <input id="smVolAtoB" type="range" min="0" max="1.5" step="0.05" value="1" />
+      </div>
+      <div class="ch-fader-row">
+        <label>Headphones</label>
+        <input id="smVolMonA" type="range" min="0" max="1" step="0.05" value="0.85" />
+      </div>
+      <div class="ch-toggles">
+        <button id="smAudAtoB" class="btn btn-toggle active">Route &rarr; B</button>
+        <button id="smMonA" class="btn btn-toggle active">Monitor A</button>
+      </div>
+      <div class="vu-mini"><div id="smVuA" class="vu-fill"></div></div>
+    </div>
+
+    <div class="deck-card ch-strip">
+      <div class="card-header">
+        <span class="slot-label">CH 2: STRANGER B</span>
+        <span id="smValBtoA" class="ch-val">100%</span>
+      </div>
+      <div class="ch-fader-row">
+        <label>Out &rarr; A</label>
+        <input id="smVolBtoA" type="range" min="0" max="1.5" step="0.05" value="1" />
+      </div>
+      <div class="ch-fader-row">
+        <label>Headphones</label>
+        <input id="smVolMonB" type="range" min="0" max="1" step="0.05" value="0.85" />
+      </div>
+      <div class="ch-toggles">
+        <button id="smAudBtoA" class="btn btn-toggle active">Route &rarr; A</button>
+        <button id="smMonB" class="btn btn-toggle active">Monitor B</button>
+      </div>
+      <div class="vu-mini"><div id="smVuB" class="vu-fill"></div></div>
+    </div>
+
+    <div class="deck-card ch-strip">
+      <div class="card-header">
+        <span class="slot-label">CH 3: ADMIN MIC</span>
+        <span id="smValMic" class="ch-val">100%</span>
+      </div>
+      <select id="smMicSelect" class="mic-select-full" title="Select Admin Microphone">
+        <option value="">Default Mic</option>
+      </select>
+      <div class="ch-fader-row">
+        <label>Mic Gain</label>
+        <input id="smVolMic" type="range" min="0" max="2" step="0.05" value="1" />
+      </div>
+      <div class="ch-toggles">
+        <button id="smEnableMic" class="btn btn-ghost">Enable Mic</button>
+        <button id="smMicMon" class="btn btn-toggle" disabled>Monitor Self</button>
+      </div>
+      <div class="ch-toggles">
+        <button id="smMicToA" class="btn btn-toggle" disabled>Route &rarr; A</button>
+        <button id="smMicToB" class="btn btn-toggle" disabled>Route &rarr; B</button>
+      </div>
+      <div class="vu-mini"><div id="smVuMic" class="vu-fill"></div></div>
+    </div>
+
+    <div class="deck-card ch-strip">
+      <div class="card-header">
+        <span class="slot-label">CH 4: SOUNDBOARD</span>
+        <span id="smValSfx" class="ch-val">90%</span>
+      </div>
+      <div class="ch-fader-row">
+        <label>SFX Gain</label>
+        <input id="smVolSfx" type="range" min="0" max="1.5" step="0.05" value="0.9" />
+      </div>
+      <div class="ch-fader-row">
+        <label>Headphones</label>
+        <input id="smVolSfxMon" type="range" min="0" max="1" step="0.05" value="0.6" />
+      </div>
+      <div class="ch-toggles">
+        <button id="smSfxToA" class="btn btn-toggle active">Route &rarr; A</button>
+        <button id="smSfxToB" class="btn btn-toggle active">Route &rarr; B</button>
+      </div>
+      <button id="smStopSfx" class="btn btn-danger">Stop All SFX</button>
+    </div>
+
+    <div class="deck-card ch-strip">
+      <div class="card-header">
+        <span class="slot-label">MASTER BUS</span>
+        <span class="badge badge-ok">Live</span>
+      </div>
+      <div class="ch-fader-row">
+        <label>Out &rarr; A Gain</label>
+        <input id="smMasterA" type="range" min="0" max="1.5" step="0.05" value="1" />
+      </div>
+      <div class="ch-fader-row">
+        <label>Out &rarr; B Gain</label>
+        <input id="smMasterB" type="range" min="0" max="1.5" step="0.05" value="1" />
+      </div>
+      <button id="smMuteAllOut" class="btn btn-danger">Mute All Outbound</button>
+    </div>
+  </section>
+
+  <!-- BOTTOM LOGS & TELEMETRY DECK (340px) -->
+  <section id="logsDeck" class="logs-deck hidden">
+    <div class="deck-card telemetry-card">
+      <div class="card-header">
+        <span class="slot-label">TELEMETRY</span>
+        <span id="uptimeBadge" class="badge badge-idle">00:00</span>
+      </div>
+      <div class="telemetry-grid">
+        <div class="tele-box">
+          <div class="tele-title">SLOT A</div>
+          <div class="tele-row"><span>Bridge</span><strong id="teleBridgeA">--</strong></div>
+          <div class="tele-row"><span>getUserMedia</span><strong id="teleGumA">0</strong></div>
+          <div class="tele-row"><span>Calls</span><strong id="teleCallsA">0</strong></div>
+          <div class="tele-row"><span>Resolution</span><strong id="teleResA">--</strong></div>
+        </div>
+        <div class="tele-box">
+          <div class="tele-title">SLOT B</div>
+          <div class="tele-row"><span>Bridge</span><strong id="teleBridgeB">--</strong></div>
+          <div class="tele-row"><span>getUserMedia</span><strong id="teleGumB">0</strong></div>
+          <div class="tele-row"><span>Calls</span><strong id="teleCallsB">0</strong></div>
+          <div class="tele-row"><span>Resolution</span><strong id="teleResB">--</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deck-card log-console-card">
+      <div class="card-header">
+        <span class="slot-label">EVENT LOGS</span>
+        <div class="log-controls">
+          <button class="btn btn-xs log-filter active" data-filter="all">All</button>
+          <button class="btn btn-xs log-filter" data-filter="A">Slot A</button>
+          <button class="btn btn-xs log-filter" data-filter="B">Slot B</button>
+          <button class="btn btn-xs log-filter" data-filter="bridge">Bridge</button>
+          <button id="btnCopyLogs" class="btn btn-xs btn-ghost">Copy</button>
+          <button id="btnClearLogs" class="btn btn-xs btn-danger">Clear</button>
+        </div>
+      </div>
+      <div id="logList" class="log-list"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS / PROXY MODAL -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Proxy, Sessions &amp; Debug Tools</h2>
+        <button id="btnCloseModal" class="btn btn-ghost">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Slot A Proxy (e.g. <code>socks5://127.0.0.1:9050</code> or <code>http://user:pass@ip:port</code>, empty = direct)</label>
+          <div class="input-row">
+            <input id="proxyAInput" type="text" placeholder="direct" />
+            <button id="btnSaveProxyA" class="btn btn-primary">Apply A</button>
+            <button id="btnClearA" class="btn btn-danger">Clear Cookies A</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Slot B Proxy</label>
+          <div class="input-row">
+            <input id="proxyBInput" type="text" placeholder="direct" />
+            <button id="btnSaveProxyB" class="btn btn-primary">Apply B</button>
+            <button id="btnClearB" class="btn btn-danger">Clear Cookies B</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Developer Tools</label>
+          <div class="input-row">
+            <button id="btnDevA" class="btn btn-ghost">DevTools Slot A</button>
+            <button id="btnDevB" class="btn btn-ghost">DevTools Slot B</button>
+            <button id="btnDevAdmin" class="btn btn-ghost">DevTools Admin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
