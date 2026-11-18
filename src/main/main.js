@@ -105,6 +105,21 @@ function createSlotView(slotId, partitionName) {
   // Mute direct tab speaker output so Admin GUI controls what you hear (monitoring)
   view.webContents.setAudioMuted(true);
 
+  // Forward keyDown events from focused slots so global/modifier keybinds work anywhere
+  view.webContents.on('before-input-event', (_event, input) => {
+    if (input.type === 'keyDown' && !input.isAutoRepeat) {
+      adminWindow?.webContents.send('slot:keydown', {
+        slotId,
+        key: input.key,
+        code: input.code,
+        control: input.control,
+        alt: input.alt,
+        shift: input.shift,
+        meta: input.meta
+      });
+    }
+  });
+
   view.webContents.on('did-navigate', (_event, url) => {
     adminWindow?.webContents.send('slot:nav', { slotId, url });
   });

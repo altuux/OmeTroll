@@ -17,6 +17,11 @@ contextBridge.exposeInMainWorld('omeAdmin', {
     ipcRenderer.on('slot:nav', handler);
     return () => ipcRenderer.removeListener('slot:nav', handler);
   },
+  onSlotKeyDown: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('slot:keydown', handler);
+    return () => ipcRenderer.removeListener('slot:keydown', handler);
+  },
   loadUrl: (target, url) => ipcRenderer.invoke('admin:load-url', { target, url }),
   reloadSlot: (target) => ipcRenderer.invoke('admin:reload', { target }),
   domAction: (target, action) => ipcRenderer.send('admin:dom-action', { target, action }),

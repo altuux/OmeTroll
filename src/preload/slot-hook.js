@@ -81,12 +81,7 @@
     let tick = 0;
 
     const drawFrame = () => {
-      if (localDecoyImg) {
-        const scale = Math.max(canvas.width / localDecoyImg.width, canvas.height / localDecoyImg.height);
-        const w = localDecoyImg.width * scale;
-        const h = localDecoyImg.height * scale;
-        ctx.drawImage(localDecoyImg, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-      } else if (
+      if (
         adminVideoTrack &&
         adminVideoTrack.readyState === 'live' &&
         bridgeVideoEl.readyState >= 2 &&
@@ -101,15 +96,31 @@
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(bridgeVideoEl, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+      } else if (localDecoyImg) {
+        const scale = Math.max(canvas.width / localDecoyImg.width, canvas.height / localDecoyImg.height);
+        const w = localDecoyImg.width * scale;
+        const h = localDecoyImg.height * scale;
+        ctx.drawImage(localDecoyImg, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
       } else {
         tick++;
-        ctx.fillStyle = '#09090b';
+        ctx.fillStyle = '#0d1017';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#71717a';
-        ctx.font = 'bold 28px sans-serif';
-        ctx.textAlign = 'center';
-        const dots = '.'.repeat((Math.floor(tick / 15) % 3) + 1);
-        ctx.fillText(`OmeTroll: Waiting for stream${dots}`, canvas.width / 2, canvas.height / 2);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const r = 28;
+        const angle = (tick * 0.16) % (Math.PI * 2);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#e4e4e7';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, angle, angle + Math.PI * 1.15);
+        ctx.stroke();
+        ctx.restore();
       }
     };
 
@@ -310,27 +321,90 @@
 
   // --- DOM helper for Start / Next / Stop actions ---
   function triggerEsc() {
-    const evInit = { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true, cancelable: true };
-    window.dispatchEvent(new KeyboardEvent('keydown', evInit));
-    document.dispatchEvent(new KeyboardEvent('keydown', evInit));
+    for (const type of ['keydown', 'keyup']) {
+      const evInit = { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true, cancelable: true };
+      window.dispatchEvent(new KeyboardEvent(type, evInit));
+      document.dispatchEvent(new KeyboardEvent(type, evInit));
+      if (document.body) document.body.dispatchEvent(new KeyboardEvent(type, evInit));
+    }
+  }
+
+  function isVisibleEl(el) {
+    if (!el || el.disabled) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
   }
 
   function clickEl(el) {
-    el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-    el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+    try {
+      el.focus?.();
+    } catch (_) {}
+    const opts = { bubbles: true, cancelable: true, view: window };
+    el.dispatchEvent(new PointerEvent('pointerdown', opts));
+    el.dispatchEvent(new MouseEvent('mousedown', opts));
+    el.dispatchEvent(new PointerEvent('pointerup', opts));
+    el.dispatchEvent(new MouseEvent('mouseup', opts));
     el.click();
+  }
+
+  function getElText(el) {
+    return (
+      el.innerText ||
+      el.textContent ||
+      el.value ||
+      el.getAttribute?.('aria-label') ||
+      el.title ||
+      ''
+    )
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function findVisibleButton(selectors, textRegex) {
+    if (selectors) {
+      const matches = Array.from(document.querySelectorAll(selectors)).filter(isVisibleEl);
+      if (textRegex) {
+        const filtered = matches.filter((el) => textRegex.test(getElText(el)));
+        if (filtered.length > 0) return filtered[0];
+      } else if (matches.length > 0) {
+        return matches[0];
+      }
+    }
+    if (!textRegex) return null;
+    const candidates = Array.from(
+      document.querySelectorAll('button, input[type="button"], [role="button"], a, div, span')
+    ).filter((el) => {
+      if (!isVisibleEl(el)) return false;
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 420 || rect.height > 150) return false;
+      if (el.children.length > 3) return false;
+      return textRegex.test(getElText(el));
+    });
+    // Prefer actual <button> or innermost matching element
+    candidates.sort((a, b) => {
+      const aBtn = a.tagName === 'BUTTON' || a.getAttribute('role') === 'button' ? 0 : 1;
+      const bBtn = b.tagName === 'BUTTON' || b.getAttribute('role') === 'button' ? 0 : 1;
+      if (aBtn !== bBtn) return aBtn - bBtn;
+      return a.children.length - b.children.length;
+    });
+    return candidates[0] || null;
   }
 
   function handleDomAction(action) {
     if (action === 'start') {
       const btn =
-        document.querySelector('.start-button, .btn-start, [data-action="start"]') ||
-        Array.from(document.querySelectorAll('button, [role="button"], div, span')).find(
-          (el) => el.children.length <= 2 && /^start\b/i.test((el.innerText || el.textContent || '').trim())
-        );
+        findVisibleButton(
+          '.start-button, .btn-start, [data-action="start"], #startbtn, .newchatbtn, .disconnectbtn',
+          /^(start|new|new chat|video|start chat|next|další|začít|nový)\b/i
+        ) ||
+        findVisibleButton('.start-button, .btn-start, [data-action="start"], #startbtn, .newchatbtn', null) ||
+        findVisibleButton(null, /^(start|new|new chat|start chat|začít|nový)\b/i);
+
       if (btn) {
         clickEl(btn);
-        bridge.sendStatus({ type: 'video-debug', msg: `Start clicked <${btn.tagName.toLowerCase()}>` });
+        bridge.sendStatus({ type: 'video-debug', msg: `Start clicked <${btn.tagName.toLowerCase()}> "${getElText(btn).slice(0, 24)}"` });
       } else {
         triggerEsc();
         bridge.sendStatus({ type: 'video-debug', msg: 'Start button not found, sent Escape' });
@@ -339,17 +413,50 @@
     }
 
     if (action === 'next') {
+      // Step 1: Prefer explicit Next/Skip/Really/New button, then Stop/Disconnect button
       const btn =
-        document.querySelector('.btn-next, .next-btn, [data-action="next"], button.next') ||
-        Array.from(document.querySelectorAll('button, [role="button"], div, span')).find(
-          (el) => el.children.length <= 2 && /^(next|skip|stop|new)\b/i.test((el.innerText || el.textContent || '').trim())
+        findVisibleButton(
+          '.btn-next, .next-btn, [data-action="next"], button.next, .skip-button, .start-button, .disconnectbtn, #disconnectbtn',
+          /^(next|skip|really\??|confirm|sure\??|new|new chat|další|přeskočit|opravdu\??|nový)\b/i
+        ) ||
+        findVisibleButton(
+          '.disconnectbtn, #disconnectbtn, .btn-next, .next-btn, .start-button, .stop-button',
+          null
+        ) ||
+        findVisibleButton(
+          null,
+          /^(next|skip|really\??|confirm|sure\??|new|stop|end|disconnect|esc|další|přeskočit|ukončit|zastavit|nový)\b/i
         );
+
       if (btn) {
         clickEl(btn);
-        bridge.sendStatus({ type: 'video-debug', msg: `Next clicked <${btn.tagName.toLowerCase()}>` });
+        bridge.sendStatus({ type: 'video-debug', msg: `Next clicked <${btn.tagName.toLowerCase()}> "${getElText(btn).slice(0, 24)}"` });
+
+        // Follow-up for 2-step / 3-step skip flows (e.g. Umingle/Uhmegle: Stop -> Really? -> New)
+        const followUp = () => {
+          const confirmOrNewBtn =
+            findVisibleButton(
+              '.disconnectbtn, #disconnectbtn, .newchatbtn, .start-button, .btn-next, .next-btn',
+              /^(really\??|confirm|sure\??|yes|new|new chat|start|start chat|opravdu\??|nový|začít)\b/i
+            ) ||
+            findVisibleButton(
+              null,
+              /^(really\??|confirm|sure\??|new|new chat|opravdu\??|nový)\b/i
+            );
+          if (confirmOrNewBtn) {
+            clickEl(confirmOrNewBtn);
+            bridge.sendStatus({
+              type: 'video-debug',
+              msg: `Next follow-up clicked <${confirmOrNewBtn.tagName.toLowerCase()}> "${getElText(confirmOrNewBtn).slice(0, 24)}"`
+            });
+          }
+        };
+        setTimeout(followUp, 90);
+        setTimeout(followUp, 230);
       } else {
         triggerEsc();
-        bridge.sendStatus({ type: 'video-debug', msg: 'Next button not found, sent Escape' });
+        setTimeout(triggerEsc, 90);
+        bridge.sendStatus({ type: 'video-debug', msg: 'Next button not found, sent double Escape' });
       }
     }
   }
@@ -448,6 +555,9 @@
             if (currentStrangerVideoTrack === track) {
               currentStrangerVideoTrack = null;
               outboundVideoSender?.replaceTrack(null).catch(() => {});
+              if (callId === activeCallId) {
+                bridge.sendStatus({ type: 'stranger-state', state: 'disconnected', callId });
+              }
             }
           });
         } else if (track.kind === 'audio') {
@@ -473,9 +583,10 @@
         });
       });
 
-      const handleDisconnect = () => {
+      const handleDisconnect = (force = false) => {
+        if (callId !== activeCallId) return;
         const state = this.connectionState || this.iceConnectionState;
-        if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+        if (force === true || state === 'disconnected' || state === 'failed' || state === 'closed') {
           currentStrangerVideoTrack = null;
           currentStrangerAudioTrack = null;
           outboundVideoSender?.replaceTrack(null).catch(() => {});
@@ -484,8 +595,14 @@
         }
       };
 
-      this.addEventListener('connectionstatechange', handleDisconnect);
-      this.addEventListener('iceconnectionstatechange', handleDisconnect);
+      const origClose = this.close.bind(this);
+      this.close = () => {
+        handleDisconnect(true);
+        return origClose();
+      };
+
+      this.addEventListener('connectionstatechange', () => handleDisconnect(false));
+      this.addEventListener('iceconnectionstatechange', () => handleDisconnect(false));
     }
   }
 
