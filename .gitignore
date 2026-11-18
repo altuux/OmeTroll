@@ -9,4 +9,5 @@ npm-debug.log*
 
 # Images / temporary decoy assets
 *.png
+!docs/screenshot.png
 *.avif

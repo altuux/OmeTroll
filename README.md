@@ -4,6 +4,8 @@
 
 Electron-based Man-in-the-Middle (MITM) video & audio router with a built-in Admin Control Deck for connecting two random video chat strangers together without any external virtual cameras or virtual audio cables.
 
+![OmeTroll Control Deck](docs/screenshot.png)
+
 ## Features
 
 - **Dual Isolated Browser Slots:** Two `WebContentsView` instances (`persist:slot-a` and `persist:slot-b`) with separate cookies, storage, device IDs, and per-slot proxy support (`http://` / `socks5://`).
@@ -38,17 +40,6 @@ npm run dist:linux  # Linux (.AppImage, .deb)
 
 # Unpacked directory only (fast test without installer)
 npm run pack
-```
-
-> **Note:** Cross-compiling macOS builds from Windows/Linux is not supported by Apple/Electron tooling. Use the automated GitHub Actions workflow below for multi-platform releases.
-
-## Automated Releases (GitHub Actions)
-
-Pushing a version tag matching `v*` triggers [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds macOS, Windows, and Linux binaries in parallel and attaches them to a new GitHub Release:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
 ```
 
 ## License
