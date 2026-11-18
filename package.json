@@ -3,9 +3,48 @@
   "version": "1.0.0",
   "description": "OmeTroll - Electron MITM Video/Audio Router & Admin Control Deck for Ome.TV and video chats",
   "main": "src/main/main.js",
+  "author": "altuux <altuux@users.noreply.github.com>",
+  "homepage": "https://github.com/altuux/OmeTroll",
   "license": "GPL-3.0-only",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
+  },
+  "build": {
+    "appId": "com.altuux.ometroll",
+    "productName": "OmeTroll",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "LICENSE"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.video"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Video"
+    }
   },
   "keywords": [
     "electron",
@@ -15,6 +54,7 @@
   ],
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^45.3.3"
+    "electron": "^45.3.3",
+    "electron-builder": "^26.18.0"
   }
 }

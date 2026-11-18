@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, WebContentsView, ipcMain, session } = require('electron');
 
-const DEBUG_LOG_PATH = path.join(__dirname, '../../popup-debug.log');
+const DEBUG_LOG_PATH = app.isPackaged
+  ? path.join(app.getPath('userData'), 'popup-debug.log')
+  : path.join(__dirname, '../../popup-debug.log');
 try {
   fs.writeFileSync(DEBUG_LOG_PATH, `--- OmeTroll Debug Log (${new Date().toISOString()}) ---\n`);
 } catch (_) {}
