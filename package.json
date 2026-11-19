@@ -1,6 +1,6 @@
 {
   "name": "ometroll",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "OmeTroll - Electron MITM Video/Audio Router & Admin Control Deck for Ome.TV and video chats",
   "main": "src/main/main.js",
   "author": "altuux <altuux@users.noreply.github.com>",
